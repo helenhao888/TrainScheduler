@@ -1,0 +1,36 @@
+.jumbotron{
+  background:url("../images/background.png") left no-repeat ;
+  background-size:cover;
+  height:130px;
+  padding:25px;
+}
+
+h1 {
+    background-color:transparent;
+    font-weight:bold;
+    color:orange;
+    font-family: 'Georgia', Times, Times New Roman, serif;
+    font-size:40px;
+    text-shadow: blue 0 -2px;
+  }
+
+caption{
+ 
+  caption-side: top;
+  background:lightskyblue;
+  font-size:22px;
+  padding:10px;
+  color:brown;
+}
+
+h3{
+  color:yellow; 
+  font-size:32px;
+}
+
+.card-header{
+  background:lightskyblue;
+}
+
+
+
