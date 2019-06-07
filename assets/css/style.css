@@ -32,5 +32,8 @@ h3{
   background:lightskyblue;
 }
 
-
+.input[type="time"]{
+  /* format:HHmm; */
+  color:red;
+}
 

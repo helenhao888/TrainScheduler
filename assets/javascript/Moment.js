@@ -1,10 +1,9 @@
 var train={
-    name:"",
-    dest:"",
-    firstT:"",
-    freqT:0,
-    nextAr:"",
-    minAway:0
+    trainName:"",
+    destination:"",
+    firstTime:"",
+    frequency:0,
+    dataAdded:0
 }
 
 // Initialize Firebase
@@ -29,15 +28,47 @@ const firebaseConfig = {
 //     use24hours: true
 // });
 
-// At the initial load and subsequent value changes, get a snapshot of the stored data.
-// This function allows you to update your page in real-time when the firebase database changes.
-database.ref().on("value", function(snapshot) {
+//Create Firebase event for adding train to the database and a row in the html when a user adds an entry
+database.ref().on("child_added", function(snapshot) {
 
+ console.log("snap",snapshot.val());
+ var trName = snapshot.val().trainName;
+ var dest = snapshot.val().destination; 
+ var firstT = snapshot.val().firstTime;
+ var freq = snapshot.val().frequency;
+ var nextArl;
+ var minAwy;
+ 
+ var firstTimeCon=moment.unix(firstT).format("HH:mm");
+ console.log("first ",firstTimeCon);
+ var firstTimeComp=moment(firstTimeCon,"HH:mm");
+ 
+ var currentTime = moment();
+ console.log("current time",currentTime);
+ var timeDiff = currentTime.diff((firstTimeComp),"minutes");
 
- //check if firebase has an existing record , update it
+ console.log("diff",timeDiff);
+
+//if current time less than the first train time, the next arrival time is the first train time
+if((timeDiff)<=0){
+    nextArl=firstTimeCon;
+    minAwy=0-timeDiff;
+}else{
+    minAwy=timeDiff % freq ;
+    nextArl=moment(currentTime.add(minAwy,"minutes")).format("HH:mm");
+    
+}
+ 
+
+ //check if firebase has an existing record , error
  
  //create a table row under the tablelist (current tain schedule)
- 
+ var trainData =$("<tr>").append($("<td>").text(trName),
+                                 $("<td>").text(dest),
+                                 $("<td>").text(freq),
+                                 $("<td>").text(nextArl),
+                                 $("<td>").text(minAwy));                
+ $(".trainlist").append(trainData);
 
 }, function(errorObject) {
     console.log("The read failed: " + errorObject.code);
@@ -45,22 +76,20 @@ database.ref().on("value", function(snapshot) {
 
 $("#submit").on("click",function(event){
     event.preventDefault();
-
-    // Get the input values
-    var trName=$("#train-name").val().trim();
-    var dest=$("#destination").val().trim();
-    var firstTime=$("#first-train-time").val().trim();
-    var freq=$("#frequency").val().trim();
-    console.log("name",trName);
-
-// CONVERT to UNIX  time format
-// add timestamp
-
+       
+    // Get the input values   
+    train.trainName=$("#train-name").val().trim();
+    train.destination=$("#destination").val().trim();
+    train.firstTime=moment($("#first-train-time").val().trim(),"LT").format("X");
+    train.frequency=$("#frequency").val().trim();
+    console.log("first time",train.firstTime);
+ 
+    train.dataAdded=firebase.database.ServerValue.TIMESTAMP;
+    
     //store to firebase
-    database.ref().set({
-        trainName:trName,
-        destination:dest,
-        firstTrainTime:firstTime,
-        frequency:freq
-    })
+    database.ref().push(train);
 })
+
+
+
+// First argument must be a valid event type = "value", "child_added", "child_removed", "child_changed", or "child_moved".
