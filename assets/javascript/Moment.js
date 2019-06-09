@@ -10,7 +10,8 @@ var query;
 var nextArl;
 var minAwy;
 var tdTrain;
-// var childArr=[];
+var actionFlg="";
+
 
 // Initialize Firebase
 
@@ -31,10 +32,11 @@ const firebaseConfig = {
   var ref=database.ref();
 
   initializeFun();
-  
+
   function initializeFun(){
     nextArl="";
     minAwy=0;
+    actionFlg="";
   }
 
 //   $('#datetimepicker3').datetimepicker({
@@ -89,11 +91,19 @@ ref.on("child_added", function(snap) {
 
 ref.on("value",function(snapshot){
     console.log("snap value change",snapshot.val());
-    if (snapshot.val() != null){
-       retrieveData(snapshot);
+    if (snapshot.val() != null && actionFlg==="delete"){
+        snapshot.forEach(function(childSnapshot) {
+            var item = childSnapshot.val();
+            item.key = childSnapshot.key;
+            console.log("item key",item.key);
+            retrieveData(childSnapshot);
+        });
+       
     }
 
-})
+}, function(errorObject) {
+    console.log("The retrieve data failed: " + errorObject.code);
+})  
 
 ref.on("child_removed",function(childsnap){
 
@@ -107,6 +117,7 @@ ref.on("child_removed",function(childsnap){
 $("#submit").on("click",function(event){
     event.preventDefault();
        
+    actionFlg="add";
     // Get the input values   
     train.trainName=$("#train-name").val().trim();
     train.destination=$("#destination").val().trim();
@@ -132,6 +143,7 @@ $("#submit").on("click",function(event){
 $(document).on("click",".editTrain",updateTrainFunc);
 
 function updateTrainFunc(){
+    actionFlg="update";
     console.log("this",$(this).parent());
     var trainTdName=$(this).parent().find(".trName").text();
     console.log("train",$(this).parent().find(".trName"));
@@ -147,6 +159,7 @@ $(document).on("click",".deleteTrain",deleteTrainFunc);
 
 function deleteTrainFunc(){
 
+    actionFlg="delete";
     var trainTd=$(this).parent().find(".trainName").text();
                
     // Delete the record whose trainName equal to trainTd 
@@ -154,10 +167,8 @@ function deleteTrainFunc(){
      snapshot.forEach(child => {
         if(child.val().trainName===trainTd){
             ref.child(child.key).remove();
-        }else{
-            childArr.push(child.key);}
         }
-        )
+        })
     });
 
 }
