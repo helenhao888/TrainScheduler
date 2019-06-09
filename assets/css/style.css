@@ -32,8 +32,11 @@ h3{
   background:lightskyblue;
 }
 
-.input[type="time"]{
-  /* format:HHmm; */
-  color:red;
+
+.fa{
+  padding:10px;
 }
 
+.deleteTrain,.editTrain{
+  border:0px;
+}

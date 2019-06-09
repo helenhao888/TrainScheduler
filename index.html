@@ -24,6 +24,7 @@
   <!-- Link to Moment.js should go here -->
   <script src="https://cdn.jsdelivr.net/momentjs/2.12.0/moment.min.js"></script>
 
+
   <link rel="stylesheet" href="assets/css/reset.css">
   <link rel="stylesheet" href="assets/css/style.css"> 
 
@@ -51,6 +52,7 @@
                    <th scope="col">Frequency(min)</th>
                    <th scope="col">Next Arrival</th>
                    <th scope="col">Minutes Away</th>
+                   <th scope="col">Action</th>
                </tr>              
            </thead>
            <tbody class="trainlist">              
@@ -68,22 +70,23 @@
           Add Train
         </div>
         <div class="card-body">
-          <form>
+          <!-- <form  id="trainForm" onsubmit="return(validate())"> -->
+          <form>  
             <div class="form-group row">
               <label for="train-name">Train Name</label>
-              <input class="form-control" id="train-name" type="text" required>
+              <input class="form-control" id="train-name" type="text" >
             </div>
             <div class="form-group row">
               <label for="destination">Destination</label>
-              <input class="form-control" id="destination" type="text" required>
+              <input class="form-control" id="destination" type="text" >
             </div>
             <div class="form-group row">
                <label for="first-train-time">First Train Time(HH:mm-military time)</label>
-               <input class="form-control timeInput" id="first-train-time" type="time" required>
+               <input class="form-control timeInput" id="first-train-time" type="time" >
             </div>
             <div class="form-group row">
               <label for="frequency">Frequency (min)</label>
-              <input class="form-control" id="frequency" type="number" min="0" required>
+              <input class="form-control" id="frequency" type="number" min="0">
             </div>
             <button class="btn btn-primary" id="submit" type="submit">Submit</button>
           </form>
