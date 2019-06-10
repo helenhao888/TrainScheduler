@@ -20,10 +20,11 @@
   <!-- <link href="https://cdn.jsdelivr.net/bootstrap.timepicker/0.2.6/css/bootstrap-timepicker.min.css" rel="stylesheet" /> -->
   <!-- Font Awesome CSS Icons (For cool glyphicons) -->
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css" />
-  <!-- <link type="text/css" href="css/bootstrap-timepicker.min.css" /> -->
-  <!-- Link to Moment.js should go here -->
+  <!-- Link to Moment should go here -->
   <script src="https://cdn.jsdelivr.net/momentjs/2.12.0/moment.min.js"></script>
-
+  
+  <!-- Script -->
+  <script src="assets/javascript/Moment.js"></script>
 
   <link rel="stylesheet" href="assets/css/reset.css">
   <link rel="stylesheet" href="assets/css/style.css"> 
@@ -43,7 +44,7 @@
 
     <div class="row trainTime">
       <div class="col-lg-12">
-        <table class="table table-bordered table-hover">
+        <table class="table table-bordered table-hover train-table">
            <caption>Current Train Schedule</caption>
            <thead class="thead-dark">                
                <tr>
@@ -63,14 +64,13 @@
   
 
   <!-- Add Train -->
-  <div class="row">
+  <div class="row addTrain">
     <div class="col-lg-12">
       <div class="card card-default">
         <div class="card-header">
           Add Train
         </div>
         <div class="card-body">
-          <!-- <form  id="trainForm" onsubmit="return(validate())"> -->
           <form>  
             <div class="form-group row">
               <label for="train-name">Train Name</label>
@@ -81,7 +81,7 @@
               <input class="form-control" id="destination" type="text" >
             </div>
             <div class="form-group row">
-               <label for="first-train-time">First Train Time(HH:mm-military time)</label>
+               <label for="first-train-time">First Train Time</label>
                <input class="form-control timeInput" id="first-train-time" type="time" >
             </div>
             <div class="form-group row">
@@ -95,10 +95,41 @@
   </div> <!--end of col-->
   </div><!--end of row-->
  
+
+  <!-- Edit Train -->
+  <div class="row updateTrain">
+    <div class="col-lg-12">
+      <div class="card card-default">
+        <div class="card-header">
+          Edit Train
+        </div>
+        <div class="card-body">
+          <form>  
+            <div class="form-group row">
+              <label for="train-name">Train Name</label>
+              <input class="form-control" id="train-name-u" type="text" >
+            </div>
+            <div class="form-group row">
+              <label for="destination">Destination</label>
+              <input class="form-control" id="destination-u" type="text" >
+            </div>
+            <div class="form-group row">
+               <label for="first-train-time">First Train Time</label>
+               <input class="form-control timeInput" id="first-train-time-u" type="time" >
+            </div>
+            <div class="form-group row">
+              <label for="frequency">Frequency (min)</label>
+              <input class="form-control" id="frequency-u" type="number" min="0">
+            </div>
+            <button class="btn btn-primary" id="submitUp" type="submit">Submit</button>
+          </form>
+        </div><!--end of card body-->    
+    </div><!--end of card-->
+  </div> <!--end of col-->
+  </div><!--end of row-->
   </div> <!--end of container-->
 
-  <!-- Script -->
-  <script src="assets/javascript/Moment.js"></script>
+  
 
 </body>
 

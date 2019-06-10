@@ -37,6 +37,10 @@ h3{
   padding:10px;
 }
 
-.deleteTrain,.editTrain{
+.deleteTrain{
   border:0px;
+}
+
+.updateTrain{
+  display:none;
 }

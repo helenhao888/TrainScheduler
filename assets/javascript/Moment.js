@@ -11,6 +11,8 @@ var nextArl;
 var minAwy;
 var tdTrain;
 var actionFlg="";
+var trainKey="";
+var database,ref;
 
 
 // Initialize Firebase
@@ -25,31 +27,29 @@ const firebaseConfig = {
     appId: "1:784656685324:web:71533bc4dfe42c5c"
   };
 
-  firebase.initializeApp(firebaseConfig);
-
-  // Create a variable to reference the database.
-  var database=firebase.database();
-  var ref=database.ref();
 
   initializeFun();
 
+  //Initialize variables and database
   function initializeFun(){
     nextArl="";
     minAwy=0;
     actionFlg="";
+    trainKey="";
+
+    firebase.initializeApp(firebaseConfig);
+    // Create a variable to reference the database.
+    database=firebase.database();
+    ref=database.ref();
+
+    $(".updateTrain").hide();
   }
 
-//   $('#datetimepicker3').datetimepicker({
-//     format: 'LT',
-//     use24hours: true
-// });
 
-//Validate the input fields. 
+//Validate the input fields can't be space
 function validate(){
- 
-    console.log("validate train text",train.trainName);
-    if( train.trainName === "" ) {
-        
+     
+    if( train.trainName === "" ) {        
         alert( "Please provide the train name!" );
         $("#train-name").focus() ;
         return false;
@@ -60,7 +60,7 @@ function validate(){
         $("#destination").focus() ;
         return false;
      }
-     //add check valid time ??????
+     
      if( train.firstTime === "" ) {
         alert( "Please provide the first train time");
         $("#first-train-time").focus() ;
@@ -82,41 +82,40 @@ ref.on("child_added", function(snap) {
 
     if (snap.val() != null){
        retrieveData (snap);    
-    }
-    
-
+    }   
 }, function(errorObject) {
     console.log("The add failed: " + errorObject.code);
 })   
 
+//Any data change on database , call the function
 ref.on("value",function(snapshot){
-    console.log("snap value change",snapshot.val());
-    if (snapshot.val() != null && actionFlg==="delete"){
-        snapshot.forEach(function(childSnapshot) {
-            var item = childSnapshot.val();
-            item.key = childSnapshot.key;
-            console.log("item key",item.key);
+    
+    //only when there are data (has child) in database and the action is delete or update, retrieve the data of each child    
+    if (snapshot.val() != null && (actionFlg==="delete"||
+        actionFlg === "update")){
+        snapshot.forEach(function(childSnapshot) {            
             retrieveData(childSnapshot);
-        });
-       
+        });       
     }
+
+ 
 
 }, function(errorObject) {
     console.log("The retrieve data failed: " + errorObject.code);
 })  
 
-ref.on("child_removed",function(childsnap){
 
-    console.log("deleted",childsnap.val());
+ref.on("child_removed",function(childsnap){
+    //empty the deleted train information under the train time table
     $(".trainlist").empty();
 
 }, function(errorObject) {
     console.log("The delete failed: " + errorObject.code);
 })   
 
-$("#submit").on("click",function(event){
+//when the add train submit button is clicked, call the function
+ $(document).on("click","#submit",function(event){
     event.preventDefault();
-       
     actionFlg="add";
     // Get the input values   
     train.trainName=$("#train-name").val().trim();
@@ -127,8 +126,7 @@ $("#submit").on("click",function(event){
     //if the input fileds pass the validation, add them to the database 
     if(validate()) {
  
-        train.dataAdded=firebase.database.ServerValue.TIMESTAMP;
-        
+        train.dataAdded=firebase.database.ServerValue.TIMESTAMP;        
         //store to firebase
         database.ref().push(train);
 
@@ -140,57 +138,94 @@ $("#submit").on("click",function(event){
     }
 })
 
+//when click the edit icon , call the updateTrainFunc function to update train information
 $(document).on("click",".editTrain",updateTrainFunc);
 
+//update train information based on the screen input
 function updateTrainFunc(){
     actionFlg="update";
-    console.log("this",$(this).parent());
-    var trainTdName=$(this).parent().find(".trName").text();
-    console.log("train",$(this).parent().find(".trName"));
-    tdTrain = $(this).parent();
-    var query = ref.orderByChild('trainName').equalTo(trainTdName); 
-    
-    console.log("query",query);
-    query.on("value", function(snapshot) {
-             console.log("get snapshot before update",snapshot)});
-}
+    var trainTd=$(this).parent().find(".trainName").text();           
 
+    // retrieve the record whose trainName equal to trainTd 
+    ref.orderByChild("trainName").on("value",function(snapshot){
+     snapshot.forEach(child => {
+        //find the child whose trainName equals to the edited one
+        if(child.val().trainName===trainTd){
+            
+            trainKey=child.key;
+            train=child.val();
+            var fTimeCon=moment.unix(train.firstTime).format("HH:mm"); 
+            $(".addTrain").hide();
+            $(".updateTrain").show();
+            //set the edit train card's value from database(object train)
+            $("#train-name-u").val(train.trainName);
+            $("#destination-u").val(train.destination);
+            $("#first-train-time-u").val(fTimeCon);
+            $("#frequency-u").val(train.frequency);
+        }
+        })
+    });
+}
+//when edit train info , once click submit button , call the function
+$(document).on("click","#submitUp",function(event){
+    event.preventDefault();
+    actionFlg="update";
+    //get the updated train info from screen input
+    train.trainName=$("#train-name-u").val().trim();
+    train.destination=$("#destination-u").val().trim();
+    fTimeCon=$("#first-train-time-u").val().trim();
+    train.frequency=$("#frequency-u").val().trim();
+    train.dataAdded=firebase.database.ServerValue.TIMESTAMP;
+    
+    var updates={};
+    //move the updated train to updates object with the updated child's key 
+    updates[trainKey]=train;    
+    //updated database
+    ref.child(trainKey).update(train);
+    // empty the trainlist, then will retrieve the data from database later
+    $(".trainlist").empty();
+    $(".addTrain").show();
+    $(".updateTrain").hide();
+
+})   
+
+//when click delete Train icon, call deleteTrainFunc function
 $(document).on("click",".deleteTrain",deleteTrainFunc);
 
+//delete selected train information
 function deleteTrainFunc(){
 
     actionFlg="delete";
+    //get the train name to be deleted
     var trainTd=$(this).parent().find(".trainName").text();
                
     // Delete the record whose trainName equal to trainTd 
     ref.orderByChild("trainName").on("value",function(snapshot){
      snapshot.forEach(child => {
         if(child.val().trainName===trainTd){
+        //delete the record from database       
             ref.child(child.key).remove();
         }
         })
     });
-
 }
 
+//retrieve the data from database
 function retrieveData (snapshot){
-    console.log("retrieve snap",snapshot.val());
+    
     var trName = snapshot.val().trainName;
     var dest = snapshot.val().destination; 
     var firstT = snapshot.val().firstTime;
     var freqT = snapshot.val().frequency;    
     
-    calculateTime(firstT,freqT);  
-
-
+    calculateTime(firstT,freqT); 
+    //create delete and edit icons
     var deleteIcon =$("<i>").text("delete").addClass("fa fa-trash-o ");
     var deleteLink=$("<a>").attr("href","#").addClass("deleteTrain").html(deleteIcon);
 
     var editIcon=$("<i>").text("edit").addClass("fa fa-pencil ");
     var editLink = $("<a>").attr("href","#").addClass("editTrain").html(editIcon);
-
-    //check if firebase has an existing record , error
-    
+   
     //create a table row under the tablelist (current tain schedule)
     var trainData =$("<tr>").addClass("trainTr").attr("name",trName);
     trainData.append( $("<td>").text(trName).addClass("trainName"),
@@ -199,20 +234,10 @@ function retrieveData (snapshot){
                     $("<td>").text(nextArl),
                     $("<td>").text(minAwy),editLink,deleteLink);                
     $(".trainlist").append(trainData);
-    console.log("trainlist",$(".trainlist"));
+  
 }
 
-// function deleteData(snapdata){
-
-//     console.log("name" ,snapdata.trainName);
-//     var className = snapdata.trainName;
-//     console.log("tdtrain",tdTrain);
-//     console.log("find td class ",tdTrain.find(className));
-//     tdTrain.find(".className").empty();
-//     //find class = ""snapdata.trainName , then empty
-// }
-
-
+//based on first time and frequency to calculate the next Arrival time and time away
 function calculateTime(time,freq){
     var firstTimeCon=moment.unix(time).format("HH:mm"); 
     var firstTimeComp=moment(firstTimeCon,"HH:mm"); 
@@ -228,8 +253,4 @@ function calculateTime(time,freq){
         nextArl=moment(currentTime.add(minAwy,"minutes")).format("HH:mm");   
     }
 }
-       // const updates = {};
-//  updates[child.key] = null;
-    //  eventNameRef.update(updates);
- 
-// First argument must be a valid event type = "value", "child_added", "child_removed", "child_changed", or "child_moved".
+    
