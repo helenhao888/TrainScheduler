@@ -13,6 +13,8 @@ var tdTrain;
 var actionFlg="";
 var trainKey="";
 var database,ref;
+var trainTd ="";
+var onValueChange;
 
 
 // Initialize Firebase
@@ -36,6 +38,7 @@ const firebaseConfig = {
     minAwy=0;
     actionFlg="";
     trainKey="";
+    trainTd ="";
 
     firebase.initializeApp(firebaseConfig);
     // Create a variable to reference the database.
@@ -77,9 +80,10 @@ function validate(){
      
 }
 
-//Create Firebase event for adding train to the database and a row in the html when a user adds an entry
+// Create Firebase event for adding train to the database and a row in the html when a user adds an entry
 ref.on("child_added", function(snap) {
-
+  
+    actionFlg="add";
     if (snap.val() != null){
        retrieveData (snap);    
     }   
@@ -91,14 +95,12 @@ ref.on("child_added", function(snap) {
 ref.on("value",function(snapshot){
     
     //only when there are data (has child) in database and the action is delete or update, retrieve the data of each child    
-    if (snapshot.val() != null && (actionFlg==="delete"||
-        actionFlg === "update")){
+    if ((snapshot.val() != null ) && (actionFlg==="delete"||actionFlg==="update")){
+         
         snapshot.forEach(function(childSnapshot) {            
             retrieveData(childSnapshot);
         });       
     }
-
- 
 
 }, function(errorObject) {
     console.log("The retrieve data failed: " + errorObject.code);
@@ -106,17 +108,34 @@ ref.on("value",function(snapshot){
 
 
 ref.on("child_removed",function(childsnap){
-    //empty the deleted train information under the train time table
+    
+    //empty all train information under the train time table,will retrieve again
     $(".trainlist").empty();
+    actionFlg="delete";
+
 
 }, function(errorObject) {
     console.log("The delete failed: " + errorObject.code);
 })   
 
+ref.on("child_changed",function(childsnap){
+    
+    actionFlg="update";
+    //empty all train information under the train time table,will retrieve again
+    $(".trainlist").empty();    
+    $(".addTrain").show();   
+    $(".updateTrain").hide(); 
+   
+}, function(errorObject) {
+    console.log("The update failed: " + errorObject.code);
+})  
+
+
 //when the add train submit button is clicked, call the function
  $(document).on("click","#submit",function(event){
+     
     event.preventDefault();
-    actionFlg="add";
+    
     // Get the input values   
     train.trainName=$("#train-name").val().trim();
     train.destination=$("#destination").val().trim();
@@ -143,12 +162,13 @@ $(document).on("click",".editTrain",updateTrainFunc);
 
 //update train information based on the screen input
 function updateTrainFunc(){
-    actionFlg="update";
-    var trainTd=$(this).parent().find(".trainName").text();           
-
-    // retrieve the record whose trainName equal to trainTd 
-    ref.orderByChild("trainName").on("value",function(snapshot){
-     snapshot.forEach(child => {
+       
+    trainTd=$(this).parent().find(".trainName").text();           
+          
+    //define the listener
+    onValueChange = function(snapshot){    
+        
+     snapshot.forEach(child => {         
         //find the child whose trainName equals to the edited one
         if(child.val().trainName===trainTd){
             
@@ -164,12 +184,16 @@ function updateTrainFunc(){
             $("#frequency-u").val(train.frequency);
         }
         })
-    });
+    }
+    //open the listener
+    ref.on("value",onValueChange);
 }
 //when edit train info , once click submit button , call the function
 $(document).on("click","#submitUp",function(event){
+    
     event.preventDefault();
-    actionFlg="update";
+    //close the listener 
+    ref.off("value",onValueChange);
     //get the updated train info from screen input
     train.trainName=$("#train-name-u").val().trim();
     train.destination=$("#destination-u").val().trim();
@@ -182,10 +206,7 @@ $(document).on("click","#submitUp",function(event){
     updates[trainKey]=train;    
     //updated database
     ref.child(trainKey).update(train);
-    // empty the trainlist, then will retrieve the data from database later
-    $(".trainlist").empty();
-    $(".addTrain").show();
-    $(".updateTrain").hide();
+    
 
 })   
 
@@ -194,8 +215,7 @@ $(document).on("click",".deleteTrain",deleteTrainFunc);
 
 //delete selected train information
 function deleteTrainFunc(){
-
-    actionFlg="delete";
+    
     //get the train name to be deleted
     var trainTd=$(this).parent().find(".trainName").text();
                
@@ -212,7 +232,7 @@ function deleteTrainFunc(){
 
 //retrieve the data from database
 function retrieveData (snapshot){
-    
+  
     var trName = snapshot.val().trainName;
     var dest = snapshot.val().destination; 
     var firstT = snapshot.val().firstTime;
