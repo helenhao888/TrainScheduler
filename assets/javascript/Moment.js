@@ -141,6 +141,8 @@ ref.on("child_changed",function(childsnap){
     train.destination=$("#destination").val().trim();
     train.firstTime=moment($("#first-train-time").val().trim(),"LT").format("X");
     train.frequency=$("#frequency").val().trim();
+    //remove leading zeros
+    train.frequency=parseInt(train.frequency,10);
 
     //if the input fileds pass the validation, add them to the database 
     if(validate()) {
@@ -199,6 +201,8 @@ $(document).on("click","#submitUp",function(event){
     train.destination=$("#destination-u").val().trim();
     fTimeCon=$("#first-train-time-u").val().trim();
     train.frequency=$("#frequency-u").val().trim();
+    //remove leading zeros
+    train.frequency=parseInt(train.frequency,10);
     train.dataAdded=firebase.database.ServerValue.TIMESTAMP;
     
     var updates={};
