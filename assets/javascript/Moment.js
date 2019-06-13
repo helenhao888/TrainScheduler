@@ -64,10 +64,19 @@ function validate(){
         return false;
      }
      
-     if( train.firstTime === "" ) {
+     if( train.firstTime === ""  ) {
         alert( "Please provide the first train time");
         $("#first-train-time").focus() ;
         return false;
+     } else{
+        var formats="HH:mm";
+        var check= moment(train.firstTime,formats,true).isValid();
+        
+        if(!check){            
+            alert("Please input a valid time, format (HH:mm) Military time");
+            $("#first-train-time").focus() ;
+            return false;
+        }          
      }
 
      if( train.frequency === "" ) {
@@ -112,6 +121,8 @@ ref.on("child_removed",function(childsnap){
     //empty all train information under the train time table,will retrieve again
     $(".trainlist").empty();
     actionFlg="delete";
+    $(".addTrain").show();   
+    $(".updateTrain").hide(); 
 
 
 }, function(errorObject) {
@@ -139,14 +150,14 @@ ref.on("child_changed",function(childsnap){
     // Get the input values   
     train.trainName=$("#train-name").val().trim();
     train.destination=$("#destination").val().trim();
-    train.firstTime=moment($("#first-train-time").val().trim(),"LT").format("X");
+    train.firstTime=$("#first-train-time").val().trim();
     train.frequency=$("#frequency").val().trim();
     //remove leading zeros
     train.frequency=parseInt(train.frequency,10);
 
     //if the input fileds pass the validation, add them to the database 
     if(validate()) {
- 
+        train.firstTime=moment($("#first-train-time").val().trim(),"HH:mm").format("X");        
         train.dataAdded=firebase.database.ServerValue.TIMESTAMP;        
         //store to firebase
         database.ref().push(train);
@@ -196,21 +207,25 @@ $(document).on("click","#submitUp",function(event){
     event.preventDefault();
     //close the listener 
     ref.off("value",onValueChange);
+    
     //get the updated train info from screen input
     train.trainName=$("#train-name-u").val().trim();
     train.destination=$("#destination-u").val().trim();
-    fTimeCon=$("#first-train-time-u").val().trim();
+    train.firstTime=$("#first-train-time-u").val().trim();    
     train.frequency=$("#frequency-u").val().trim();
     //remove leading zeros
     train.frequency=parseInt(train.frequency,10);
-    train.dataAdded=firebase.database.ServerValue.TIMESTAMP;
-    
-    var updates={};
-    //move the updated train to updates object with the updated child's key 
-    updates[trainKey]=train;    
-    //updated database
-    ref.child(trainKey).update(train);
-    
+    //call validate to check the update inputs are valid, then  update the database
+    var valResult=validate();
+    if(valResult){
+        train.firstTime=moment($("#first-train-time-u").val().trim(),"HH:mm").format("X"); 
+        train.dataAdded=firebase.database.ServerValue.TIMESTAMP;        
+        var updates={};
+        //move the updated train to updates object with the updated child's key 
+        updates[trainKey]=train;    
+        //updated database
+        ref.child(trainKey).update(train);
+    }
 
 })   
 
@@ -263,18 +278,21 @@ function retrieveData (snapshot){
 
 //based on first time and frequency to calculate the next Arrival time and time away
 function calculateTime(time,freq){
+    
     var firstTimeCon=moment.unix(time).format("HH:mm"); 
     var firstTimeComp=moment(firstTimeCon,"HH:mm"); 
     var currentTime = moment();
+    
     var timeDiff = currentTime.diff((firstTimeComp),"minutes");
-
+    
     //if current time less than the first train time, the next arrival time is the first train time
     if((timeDiff)<=0){
         nextArl=firstTimeCon;
         minAwy=0-timeDiff;
     }else{
-        minAwy=timeDiff % freq ;
+        minAwy=freq-timeDiff % freq ;
         nextArl=moment(currentTime.add(minAwy,"minutes")).format("HH:mm");   
     }
+    
 }
     
